@@ -1,7 +1,8 @@
-const { response } = require('express');
 const express = require('express');
-const partnerRouter = express.Router();
 const Partner = require('../models/partner');
+const authenticate = require('../authenticate');
+
+const partnerRouter = express.Router();
 
 partnerRouter
   .route('/')
@@ -9,29 +10,26 @@ partnerRouter
     Partner.find()
       .then((partners) => {
         res.statusCode = 200;
-        res.setHeader('Content-type', 'application/json');
+        res.setHeader('Content-Type', 'application/json');
         res.json(partners);
       })
       .catch((err) => next(err));
   })
-
-  .post((req, res, next) => {
+  .post(authenticate.verifyUser, (req, res, next) => {
     Partner.create(req.body)
       .then((partner) => {
-        console.log('Partner Created', partner);
+        console.log('Partner Created ', partner);
         res.statusCode = 200;
         res.setHeader('Content-Type', 'application/json');
         res.json(partner);
       })
       .catch((err) => next(err));
   })
-
-  .put((req, res, next) => {
+  .put(authenticate.verifyUser, (req, res) => {
     res.statusCode = 403;
     res.end('PUT operation not supported on /partners');
   })
-
-  .delete((req, res, next) => {
+  .delete(authenticate.verifyUser, (req, res, next) => {
     Partner.deleteMany()
       .then((response) => {
         res.statusCode = 200;
@@ -42,9 +40,9 @@ partnerRouter
   });
 
 partnerRouter
-  .route('/:partnersId')
+  .route('/:partnerId')
   .get((req, res, next) => {
-    Partner.findById(req.params.partnersId)
+    Partner.findById(req.params.partnerId)
       .then((partner) => {
         res.statusCode = 200;
         res.setHeader('Content-Type', 'application/json');
@@ -52,17 +50,15 @@ partnerRouter
       })
       .catch((err) => next(err));
   })
-
-  .post((req, res, next) => {
+  .post(authenticate.verifyUser, (req, res) => {
     res.statusCode = 403;
     res.end(
-      `POST operation not supported on /partners/${req.params.partnersId}`
+      `POST operation not supported on /partners/${req.params.partnerId}`
     );
   })
-
-  .put((req, res, next) => {
+  .put(authenticate.verifyUser, (req, res, next) => {
     Partner.findByIdAndUpdate(
-      req.params.partnersId,
+      req.params.partnerId,
       {
         $set: req.body
       },
@@ -75,12 +71,11 @@ partnerRouter
       })
       .catch((err) => next(err));
   })
-
-  .delete((req, res, next) => {
-    Partner.findByIdAndDelete(req.paramsId)
+  .delete(authenticate.verifyUser, (req, res, next) => {
+    Partner.findByIdAndDelete(req.params.partnerId)
       .then((response) => {
         res.statusCode = 200;
-        res.setHeader('Content-type', 'application/json');
+        res.setHeader('Content-Type', 'application/json');
         res.json(response);
       })
       .catch((err) => next(err));
