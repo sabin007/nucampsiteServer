@@ -8,12 +8,11 @@ var passport = require('passport');
 
 var authenticate = require('../authenticate');
 
-var router = express.Router();
-/* GET users listing. */
+var router = express.Router(); // /* GET users listing. */
+// router.get('/', function (req, res, next) {
+//   res.send('respond with a resource');
+// });
 
-router.get('/', function (req, res, next) {
-  res.send('respond with a resource');
-});
 router.post('/signup', function (req, res) {
   User.register(new User({
     username: req.body.username
@@ -78,7 +77,7 @@ router.get('/logout', function (req, res, next) {
     return next(err);
   }
 });
-router.get('/users', authenticate.verifyUser, authenticate.verifyAdmin, function (req, res, next) {
+router.get('/', authenticate.verifyUser, authenticate.verifyAdmin, function (req, res, next) {
   User.find().then(function (users) {
     res.statusCode = 200;
     res.setHeader('Content-Type', 'application/json');
