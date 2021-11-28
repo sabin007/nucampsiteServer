@@ -6,8 +6,12 @@ var Partner = require('../models/partner');
 
 var authenticate = require('../authenticate');
 
+var cors = require('./cors');
+
 var partnerRouter = express.Router();
-partnerRouter.route('/').get(function (req, res, next) {
+partnerRouter.route('/').options(cors.corsWithOptions, function (req, res) {
+  return res.sendStatus(200);
+}).get(cors.cors, function (req, res, next) {
   Partner.find().then(function (partners) {
     res.statusCode = 200;
     res.setHeader('Content-Type', 'application/json');
@@ -15,7 +19,7 @@ partnerRouter.route('/').get(function (req, res, next) {
   })["catch"](function (err) {
     return next(err);
   });
-}).post(authenticate.verifyUser, authenticate.verifyAdmin, function (req, res, next) {
+}).post(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, function (req, res) {
   Partner.create(req.body).then(function (partner) {
     console.log('Partner Created', partner);
     res.statusCode = 200;
@@ -24,10 +28,10 @@ partnerRouter.route('/').get(function (req, res, next) {
   })["catch"](function (err) {
     return next(err);
   });
-}).put(authenticate.verifyUser, function (req, res) {
-  res.statusCode = 403;
-  res.end('PUT operation not supported on /partners');
-})["delete"](authenticate.verifyUser, authenticate.verifyAdmin, function (req, res, next) {
+}).put(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, function (req, res) {
+  res.write("Updating the partners: ".concat(req.params.partnerId, "\n"));
+  res.end("Will update the partners: ".concat(req.body.name, "\n    with description: ").concat(req.body.description));
+})["delete"](cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, function (req, res) {
   Partner.deleteMany().then(function (response) {
     res.statusCode = 200;
     res.setHeader('Content-Type', 'application/json');
@@ -36,7 +40,9 @@ partnerRouter.route('/').get(function (req, res, next) {
     return next(err);
   });
 });
-partnerRouter.route('/:partnerId').get(function (req, res) {
+partnerRouter.route('/:partnerId').options(cors.corsWithOptions, function (req, res) {
+  return res.sendStatus(200);
+}).get(cors.cors, function (req, res, next) {
   Partner.findById(req.params.partnerId).then(function (partner) {
     res.statusCode = 200;
     res.setHeader('Content-Type', 'application/json');
@@ -44,10 +50,10 @@ partnerRouter.route('/:partnerId').get(function (req, res) {
   })["catch"](function (err) {
     return next(err);
   });
-}).post(authenticate.verifyUser, function (req, res) {
+}).post(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, function (req, res) {
   res.statusCode = 403;
-  res.end("POST operation not supported on /partners/".concat(req.params.partnerId));
-}).put(authenticate.verifyUser, authenticate.verifyAdmin, function (req, res, next) {
+  res.end("Post operation not supported on /partners/".concat(req.params.partnerId));
+}).put(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, function (req, res) {
   Partner.findByIdAndUpdate(req.params.partnerId, {
     $set: req.body
   }, {
@@ -59,7 +65,7 @@ partnerRouter.route('/:partnerId').get(function (req, res) {
   })["catch"](function (err) {
     return next(err);
   });
-})["delete"](authenticate.verifyUser, authenticate.verifyAdmin, function (req, res, next) {
+})["delete"](cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, function (req, res) {
   Partner.findByIdAndDelete(req.params.partnerId).then(function (response) {
     res.statusCode = 200;
     res.setHeader('Content-Type', 'application/json');

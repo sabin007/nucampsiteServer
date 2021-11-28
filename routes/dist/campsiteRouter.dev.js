@@ -6,8 +6,12 @@ var Campsite = require('../models/campsite');
 
 var authenticate = require('../authenticate');
 
+var cors = require('./cors');
+
 var campsiteRouter = express.Router();
-campsiteRouter.route('/').get(function (req, res, next) {
+campsiteRouter.route('/').options(cors.corsWithOptions, function (req, res) {
+  return res.sendStatus(200);
+}).get(cors.cors, function (req, res, next) {
   Campsite.find().populate('comments.author').then(function (campsites) {
     res.statusCode = 200;
     res.setHeader('Content-Type', 'application/json');
@@ -15,7 +19,7 @@ campsiteRouter.route('/').get(function (req, res, next) {
   })["catch"](function (err) {
     return next(err);
   });
-}).post(authenticate.verifyUser, authenticate.verifyAdmin, function (req, res, next) {
+}).post(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, function (req, res, next) {
   Campsite.create(req.body).then(function (campsite) {
     console.log('Campsite Created ', campsite);
     res.statusCode = 200;
@@ -24,10 +28,10 @@ campsiteRouter.route('/').get(function (req, res, next) {
   })["catch"](function (err) {
     return next(err);
   });
-}).put(authenticate.verifyUser, function (req, res) {
+}).put(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, function (req, res) {
   res.statusCode = 403;
   res.end('PUT operation not supported on /campsites');
-})["delete"](authenticate.verifyUser, authenticate.verifyAdmin, function (req, res, next) {
+})["delete"](cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, function (req, res, next) {
   Campsite.deleteMany().then(function (response) {
     res.statusCode = 200;
     res.setHeader('Content-Type', 'application/json');
@@ -36,7 +40,9 @@ campsiteRouter.route('/').get(function (req, res, next) {
     return next(err);
   });
 });
-campsiteRouter.route('/:campsiteId').get(function (req, res) {
+campsiteRouter.route('/:campsiteId').options(cors.corsWithOptions, function (req, res) {
+  return res.sendStatus(200);
+}).get(cors.cors, function (req, res, next) {
   Campsite.findById(req.params.campsiteId).populate('comments.author').then(function (campsite) {
     res.statusCode = 200;
     res.setHeader('Content-Type', 'application/json');
@@ -44,10 +50,10 @@ campsiteRouter.route('/:campsiteId').get(function (req, res) {
   })["catch"](function (err) {
     return next(err);
   });
-}).post(authenticate.verifyUser, function (req, res) {
+}).post(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, function (req, res) {
   res.statusCode = 403;
   res.end("POST operation not supported on /campsites/".concat(req.params.campsiteId));
-}).put(authenticate.verifyUser, authenticate.verifyAdmin, function (req, res, next) {
+}).put(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, function (req, res, next) {
   Campsite.findByIdAndUpdate(req.params.campsiteId, {
     $set: req.body
   }, {
@@ -59,7 +65,7 @@ campsiteRouter.route('/:campsiteId').get(function (req, res) {
   })["catch"](function (err) {
     return next(err);
   });
-})["delete"](authenticate.verifyUser, authenticate.verifyAdmin, function (req, res, next) {
+})["delete"](cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, function (req, res, next) {
   Campsite.findByIdAndDelete(req.params.campsiteId).then(function (response) {
     res.statusCode = 200;
     res.setHeader('Content-Type', 'application/json');
@@ -68,7 +74,9 @@ campsiteRouter.route('/:campsiteId').get(function (req, res) {
     return next(err);
   });
 });
-campsiteRouter.route('/:campsiteId/comments').get(function (req, res, next) {
+campsiteRouter.route('/:campsiteId/comments').options(cors.corsWithOptions, function (req, res) {
+  return res.sendStatus(200);
+}).get(cors.cors, function (req, res, next) {
   Campsite.findById(req.params.campsiteId).populate('comments.author').then(function (campsite) {
     if (campsite) {
       res.statusCode = 200;
@@ -82,7 +90,7 @@ campsiteRouter.route('/:campsiteId/comments').get(function (req, res, next) {
   })["catch"](function (err) {
     return next(err);
   });
-}).post(authenticate.verifyUser, function (req, res, next) {
+}).post(cors.corsWithOptions, authenticate.verifyUser, function (req, res, next) {
   Campsite.findById(req.params.campsiteId).then(function (campsite) {
     if (campsite) {
       req.body.author = req.user._id;
@@ -102,10 +110,10 @@ campsiteRouter.route('/:campsiteId/comments').get(function (req, res, next) {
   })["catch"](function (err) {
     return next(err);
   });
-}).put(authenticate.verifyUser, function (req, res) {
+}).put(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, function (req, res) {
   res.statusCode = 403;
   res.end("PUT operation not supported on /campsites/".concat(req.params.campsiteId, "/comments"));
-})["delete"](authenticate.verifyUser, authenticate.verifyAdmin, function (req, res, next) {
+})["delete"](cors.corsWithOptions, authenticate.verifyUser, function (req, res, next) {
   Campsite.findById(req.params.campsiteId).then(function (campsite) {
     if (campsite) {
       for (var i = campsite.comments.length - 1; i >= 0; i--) {
@@ -128,7 +136,9 @@ campsiteRouter.route('/:campsiteId/comments').get(function (req, res, next) {
     return next(err);
   });
 });
-campsiteRouter.route('/:campsiteId/comments/:commentId').get(function (req, res, next) {
+campsiteRouter.route('/:campsiteId/comments/:commentId').options(cors.corsWithOptions, function (req, res) {
+  return res.sendStatus(200);
+}).get(cors.cors, function (req, res, next) {
   Campsite.findById(req.params.campsiteId).populate('comments.author').then(function (campsite) {
     if (campsite && campsite.comments.id(req.params.commentId)) {
       res.statusCode = 200;
@@ -146,10 +156,10 @@ campsiteRouter.route('/:campsiteId/comments/:commentId').get(function (req, res,
   })["catch"](function (err) {
     return next(err);
   });
-}).post(authenticate.verifyUser, function (req, res) {
+}).post(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, function (req, res) {
   res.statusCode = 403;
   res.end("POST operation not supported on /campsites/".concat(req.params.campsiteId, "/comments/").concat(req.params.commentId));
-}).put(authenticate.verifyUser, function (req, res, next) {
+}).put(cors.corsWithOptions, authenticate.verifyUser, function (req, res, next) {
   Campsite.findById(req.params.campsiteId).then(function (campsite) {
     if (campsite && campsite.comments.id(req.params.commentId)) {
       if (campsite.comments.id(req.params.commentId).author._id.equals(req.user._id)) {
@@ -169,7 +179,7 @@ campsiteRouter.route('/:campsiteId/comments/:commentId').get(function (req, res,
           return next(err);
         });
       } else {
-        err = new Error('You are not authorized to update this comment');
+        err = new Error('You are not the authorized author of this comment!');
         err.status = 403;
         return next(err);
       }
@@ -185,10 +195,10 @@ campsiteRouter.route('/:campsiteId/comments/:commentId').get(function (req, res,
   })["catch"](function (err) {
     return next(err);
   });
-})["delete"](authenticate.verifyUser, function (req, res, next) {
+})["delete"](cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, function (req, res, next) {
   Campsite.findById(req.params.campsiteId).then(function (campsite) {
-    if (campsite && campsite.comments.id(req.params.commentId)) {
-      if (campsite.comments.id(req.params.commentId).author._id.equals(req.user._id)) {
+    if (req.body.author.equals(req.user._id)) {
+      if (campsite && campsite.comments.id(req.params.commentId)) {
         campsite.comments.id(req.params.commentId).remove();
         campsite.save().then(function (campsite) {
           res.statusCode = 200;
@@ -198,7 +208,7 @@ campsiteRouter.route('/:campsiteId/comments/:commentId').get(function (req, res,
           return next(err);
         });
       } else {
-        err = new Error('You are not authorized to delete this comment');
+        err = new Error("".concat(req.user._id, " is not the authorized author on comment!"));
         err.status = 403;
         return next(err);
       }

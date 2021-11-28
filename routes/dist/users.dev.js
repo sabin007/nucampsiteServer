@@ -8,18 +8,30 @@ var passport = require('passport');
 
 var authenticate = require('../authenticate');
 
-var router = express.Router(); // /* GET users listing. */
-// router.get('/', function (req, res, next) {
-//   res.send('respond with a resource');
-// });
+var _require = require('morgan'),
+    token = _require.token;
 
-router.post('/signup', function (req, res) {
+var cors = require('./cors');
+
+var router = express.Router();
+/* GET users listing. */
+
+router.get('/', cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, function (req, res, next) {
+  User.find().then(function (users) {
+    res.statusCode = 200;
+    res.setHeader('Content-Type', 'application/json');
+    res.json(users);
+  })["catch"](function (err) {
+    return next(err);
+  });
+});
+router.post('/signup', cors.corsWithOptions, function (req, res) {
   User.register(new User({
     username: req.body.username
   }), req.body.password, function (err, user) {
     if (err) {
       res.statusCode = 500;
-      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-type', 'application/json');
       res.json({
         err: err
       });
@@ -47,6 +59,7 @@ router.post('/signup', function (req, res) {
           res.setHeader('Content-Type', 'application/json');
           res.json({
             success: true,
+            token: token,
             status: 'Registration Successful!'
           });
         });
@@ -54,7 +67,7 @@ router.post('/signup', function (req, res) {
     }
   });
 });
-router.post('/login', passport.authenticate('local'), function (req, res) {
+router.post('/login', cors.corsWithOptions, passport.authenticate('local'), function (req, res) {
   var token = authenticate.getToken({
     _id: req.user._id
   });
@@ -62,11 +75,11 @@ router.post('/login', passport.authenticate('local'), function (req, res) {
   res.setHeader('Content-Type', 'application/json');
   res.json({
     success: true,
-    token: token,
-    status: 'You are successfully logged in!'
+    status: 'You are successfully logged in!',
+    token: token
   });
 });
-router.get('/logout', function (req, res, next) {
+router.get('/logout', cors.corsWithOptions, function (req, res, next) {
   if (req.session) {
     req.session.destroy();
     res.clearCookie('session-id');
@@ -76,14 +89,5 @@ router.get('/logout', function (req, res, next) {
     err.status = 401;
     return next(err);
   }
-});
-router.get('/', authenticate.verifyUser, authenticate.verifyAdmin, function (req, res, next) {
-  User.find().then(function (users) {
-    res.statusCode = 200;
-    res.setHeader('Content-Type', 'application/json');
-    res.json(users);
-  })["catch"](function (err) {
-    return next(err);
-  });
 });
 module.exports = router;
